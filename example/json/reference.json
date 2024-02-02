@@ -1,0 +1,65 @@
+{
+  "collections": {
+    "raw_bits": "raw_bits",
+    "processed_bits": "processed_bits",
+    "workflows": "workflows",
+    "components": "components",
+    "workflowBitLink": "workflow_bit_link",
+    "dependencies": "dependencies",
+    "hierarchy_nodes": "hierarchy_nodes"
+  },
+  "connection":
+  {
+    "name": "elasticsearch",
+    "pingInterval": 1000,
+    "logConnection": true,
+    "retrys": 3,
+    "retryInterval": 5000,
+    "connect": {
+      "node": ["http://elasticsearch:9200"],
+      "auth": {
+        "username": "elastic",
+        "password": "dd-team"
+      }
+    },
+    "indexSettings": {
+      "raw_bits": {
+        "number_of_shards": 2,
+        "number_of_replicas": 1
+      },
+      "processed_bits": {
+        "number_of_shards": 1,
+        "number_of_replicas": 1
+      },
+      "workflows": {
+        "number_of_shards": 1,
+        "number_of_replicas": 1
+      },
+      "components": {
+        "number_of_shards": 1,
+        "number_of_replicas": 1
+      },
+      "workflowBitLink": {
+        "number_of_shards": 1,
+        "number_of_replicas": 1
+      },
+      "dependencies": {
+        "number_of_shards": 1,
+        "number_of_replicas": 1
+      },
+      "hierarchy_nodes": {
+        "number_of_shards": 1,
+        "number_of_replicas": 1
+      }
+    },
+    "additional_fields": {
+      "from": 0,
+      "size": 10000
+    }
+  },
+  "connectionPool": {
+    "max": 10,
+    "min": 4,
+    "priorityRange": 10
+  }
+}
