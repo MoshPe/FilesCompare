@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="FilesCompare Yaml" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="FilesCompare" />
+    <working_directory value="$PROJECT_DIR$" />
+    <parameters value="compare --reference example/yaml/reference.yaml example/yaml/A.yaml example/yaml/B.yaml" />
+    <sudo value="true" />
+    <kind value="PACKAGE" />
+    <package value="FilesCompare" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$/main.go" />
+    <method v="2" />
+  </configuration>
+</component>
