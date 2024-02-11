@@ -8,11 +8,8 @@ import (
 	"github.com/spf13/cobra"
 	_ "gopkg.in/yaml.v3"
 	"log"
-	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
-	"time"
 )
 
 var ReferenceFilePath string
@@ -91,12 +88,12 @@ func compareFilesContent(reference interface{}, files map[string]interface{}) {
 			log.Printf("Files %s to %s are NOT equals", ReferenceFileName, fileName)
 			for _, s := range diff {
 				keys, fields := utils.ExtractKeys(s)
-				referenceValue, err := getValue(fields, reference)
+				referenceValue, err := utils.GetValue(fields, reference)
 				if err != nil {
 					log.Fatalf("Error extractig field %s from %s", keys, ReferenceFileName)
 				}
 
-				compareToValue, err := getValue(fields, fileContent)
+				compareToValue, err := utils.GetValue(fields, fileContent)
 				if err != nil {
 					log.Fatalf("Error extractig field %s from %s", keys, fileName)
 				}
@@ -110,53 +107,11 @@ func compareFilesContent(reference interface{}, files map[string]interface{}) {
 }
 
 func compareFilesDates(files []string) {
-	creationReferenceTime, modificationReferenceTime := getCreationModificationTime(ReferenceFilePath)
+	creationReferenceTime, modificationReferenceTime := utils.GetCreationModificationTime(ReferenceFilePath)
 
 	for _, file := range files {
-		creationDate, modificationDate := getCreationModificationTime(file)
+		creationDate, modificationDate := utils.GetCreationModificationTime(file)
 		csvOutput.WriteRow(creationReferenceTime, creationDate, "Creation Date", file)
 		csvOutput.WriteRow(modificationReferenceTime, modificationDate, "Modification Date", file)
 	}
-}
-
-func getCreationModificationTime(path string) (time.Time, time.Time) {
-	fileInfo, err := os.Stat(path)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return time.Time{}, time.Time{}
-	}
-	creationReferenceTime := fileInfo.ModTime()
-	modificationReferenceTime := fileInfo.ModTime()
-	return creationReferenceTime, modificationReferenceTime
-}
-
-func getValue(fields []string, obj interface{}) (interface{}, error) {
-	objMap := make(map[string]interface{})
-	var ok bool
-	v := reflect.ValueOf(obj)
-	if v.Kind() == reflect.Map {
-		// Iterate over map keys and values
-		for _, key := range v.MapKeys() {
-			val := v.MapIndex(key)
-			objMap[utils.ConvertToString(key.Interface())] = val.Interface()
-		}
-	}
-
-	for i, field := range fields {
-		val, found := objMap[field]
-		if !found {
-			return nil, fmt.Errorf("field %s not found", field)
-		}
-
-		if i == len(fields)-1 {
-			return val, nil
-		}
-
-		objMap, ok = val.(map[string]interface{})
-		if !ok {
-			return nil, errors.New("invalid structure")
-		}
-	}
-
-	return nil, errors.New("invalid path")
 }

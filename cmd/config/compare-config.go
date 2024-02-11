@@ -3,24 +3,31 @@ package config
 import (
 	"FilesCompare/cmd"
 	"FilesCompare/cmd/utils"
-	"errors"
-	"fmt"
+	"FilesCompare/pkg"
 	"github.com/go-test/deep"
+	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	_ "gopkg.in/yaml.v3"
 	"log"
-	"os"
 	"path/filepath"
-	"reflect"
-	"strings"
-	"time"
 )
 
+type Application struct {
+	FilesContent map[string]FileContent
+}
+
+type FileContent struct {
+	Content interface{}
+	path    string
+}
+
 var csvOutput utils.CsvCompareWriter
-var referenceFilePath string
-var referenceFileName string
+var referenceApplicationName string
 var outputPath string
+var FileCompareConfig pkg.FileCompareConfig
+var applicationsFiles map[string]Application
+var referenceFilesContent map[string]FileContent
 
 func compareConfigCmd() *cobra.Command {
 	var compareCmd = &cobra.Command{
@@ -28,46 +35,22 @@ func compareConfigCmd() *cobra.Command {
 		Short:   "Compare files using the config file",
 		Example: `file-compare compare-config`,
 		Run: func(cmd *cobra.Command, args []string) {
-			fileCompareConfig := viper.AllSettings()
-			filesContent := make(map[string]interface{})
-			referenceFileName = filepath.Base(referenceFilePath)
-			var referenceFileContent interface{}
-			fileExt := filepath.Ext(referenceFilePath)
-			log.Println("Comparing files of type " + fileExt)
+			config := viper.AllSettings()
 
-			switch strings.ToLower(fileExt) {
-			case utils.Json:
-				for _, path := range args {
-					filesContent[filepath.Base(path)] = utils.UnmarshalJson(path)
-				}
-				referenceFileContent = utils.UnmarshalJson(referenceFilePath)
-				break
-			case utils.YAML, utils.YML:
-				for _, path := range args {
-					filesContent[filepath.Base(path)] = utils.UnmarshalYaml(path)
-				}
-				referenceFileContent = utils.UnmarshalYaml(referenceFilePath)
-				break
-			case utils.XML:
-				for _, path := range args {
-					filesContent[filepath.Base(path)] = utils.UnmarshalXML(path)
-				}
-				referenceFileContent = utils.UnmarshalXML(referenceFilePath)
-				break
-			default:
-				panic(errors.New(fmt.Sprintf("invalid file type: %s", fileExt)))
+			if err := mapstructure.Decode(config, &FileCompareConfig); err != nil {
+				log.Fatalln("Error decoding settings:", err)
 			}
 
-			closeCsv := csvOutput.InitCsv(outputPath, referenceFileName, args)
+			getFilesPaths()
+
+			keys := make([]string, 0, len(applicationsFiles))
+			for key := range applicationsFiles {
+				keys = append(keys, key)
+			}
+			closeCsv := csvOutput.InitCsvWithAppNames(outputPath, FileCompareConfig.FilesToCompare, keys)
 			defer closeCsv()
-			compareFilesContent(referenceFileContent, filesContent)
-			compareFilesDates(args)
-		},
-		Args: func(cmd *cobra.Command, args []string) error {
-			if referenceFilePath == "" {
-				return errors.New("reference file is required")
-			}
-			return nil
+			compareFilesDates()
+			prepFilesToCompare()
 		},
 	}
 	compareFlags(compareCmd)
@@ -78,84 +61,86 @@ func init() {
 	cmd.RootCmd.AddCommand(compareConfigCmd())
 }
 func compareFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&referenceFilePath, "reference", "r", "", "Reference file to compare")
 	cmd.Flags().StringVarP(&outputPath, "output", "o", "compare_results", "Output file name. default: compare_results.csv")
 }
 
-func compareFilesContent(reference interface{}, files map[string]interface{}) {
+func compareFilesContent(reference interface{}, files map[string]interface{}, fileName string) {
 	var diff []string
-	for fileName, fileContent := range files {
+	for appName, fileContent := range files {
 		diff = deep.Equal(reference, fileContent)
 		if diff != nil {
-			log.Printf("Files %s to %s are NOT equals", referenceFileName, fileName)
+			log.Printf("File %s are NOT equals - AppName : %s", fileName, appName)
 			for _, s := range diff {
 				keys, fields := utils.ExtractKeys(s)
-				referenceValue, err := getValue(fields, reference)
+				referenceValue, err := utils.GetValue(fields, reference)
 				if err != nil {
-					log.Fatalf("Error extractig field %s from %s", keys, referenceFileName)
+					log.Fatalf("Error extractig field %s from reference file %s", keys, fileName)
 				}
 
-				compareToValue, err := getValue(fields, fileContent)
+				compareToValue, err := utils.GetValue(fields, fileContent)
 				if err != nil {
-					log.Fatalf("Error extractig field %s from %s", keys, fileName)
+					log.Fatalf("Error extractig field %s from application file %s - AppName : %s", keys, fileName, appName)
 				}
 
 				csvOutput.WriteRow(referenceValue, compareToValue, keys, fileName)
 			}
 		} else {
-			log.Printf("Files %s to %s are equals", referenceFileName, fileName)
+			log.Printf("Files %s are equals - AppName : %s", fileName, appName)
 		}
 	}
 }
 
-func compareFilesDates(files []string) {
-	creationReferenceTime, modificationReferenceTime := getCreationModificationTime(referenceFilePath)
+func getFilesPaths() {
+	referenceFilesContent = make(map[string]FileContent)
+	referenceApplicationName = filepath.Base(FileCompareConfig.ReferenceApplication)
 
-	for _, file := range files {
-		creationDate, modificationDate := getCreationModificationTime(file)
-		csvOutput.WriteRow(creationReferenceTime, creationDate, "Creation Date", file)
-		csvOutput.WriteRow(modificationReferenceTime, modificationDate, "Modification Date", file)
-	}
-}
-
-func getCreationModificationTime(path string) (time.Time, time.Time) {
-	fileInfo, err := os.Stat(path)
+	referencePatterns, err := FindFilesMatchingPatterns(FileCompareConfig.ReferenceApplication, FileCompareConfig.FilesToCompare)
 	if err != nil {
-		fmt.Println("Error:", err)
-		return time.Time{}, time.Time{}
+		log.Fatalln("Error iterating directories:", err)
 	}
-	creationReferenceTime := fileInfo.ModTime()
-	modificationReferenceTime := fileInfo.ModTime()
-	return creationReferenceTime, modificationReferenceTime
+	for _, pattern := range referencePatterns {
+		referenceFilesContent[filepath.Base(pattern)] = FileContent{
+			utils.MarshalFile(pattern),
+			pattern,
+		}
+	}
+
+	applicationsFiles = make(map[string]Application)
+	for _, application := range FileCompareConfig.CompareApplications {
+		var applicationFileContent Application
+		applicationFileContent.FilesContent = make(map[string]FileContent)
+		patterns, err := FindFilesMatchingPatterns(application.Path, FileCompareConfig.FilesToCompare)
+		if err != nil {
+			log.Fatalln("Error iterating directories:", err)
+		}
+		for _, pattern := range patterns {
+			applicationFileContent.FilesContent[filepath.Base(pattern)] = FileContent{
+				utils.MarshalFile(pattern),
+				pattern,
+			}
+		}
+		applicationsFiles[application.ApplicationName] = applicationFileContent
+	}
+	log.Println("Done organizing files")
 }
 
-func getValue(fields []string, obj interface{}) (interface{}, error) {
-	objMap := make(map[string]interface{})
-	var ok bool
-	v := reflect.ValueOf(obj)
-	if v.Kind() == reflect.Map {
-		// Iterate over map keys and values
-		for _, key := range v.MapKeys() {
-			val := v.MapIndex(key)
-			objMap[utils.ConvertToString(key.Interface())] = val.Interface()
+func prepFilesToCompare() {
+	for _, pattern := range FileCompareConfig.FilesToCompare {
+		filesToCompare := make(map[string]interface{})
+		for applicationName, application := range applicationsFiles {
+			filesToCompare[applicationName] = application.FilesContent[pattern].Content
+		}
+		compareFilesContent(referenceFilesContent[pattern].Content, filesToCompare, pattern)
+	}
+}
+
+func compareFilesDates() {
+	for _, application := range applicationsFiles {
+		for pattern, fileContent := range application.FilesContent {
+			creationReferenceTime, modificationReferenceTime := utils.GetCreationModificationTime(referenceFilesContent[pattern].path)
+			creationDate, modificationDate := utils.GetCreationModificationTime(fileContent.path)
+			csvOutput.WriteRow(creationReferenceTime, creationDate, "Creation Date", pattern)
+			csvOutput.WriteRow(modificationReferenceTime, modificationDate, "Modification Date", pattern)
 		}
 	}
-
-	for i, field := range fields {
-		val, found := objMap[field]
-		if !found {
-			return nil, fmt.Errorf("field %s not found", field)
-		}
-
-		if i == len(fields)-1 {
-			return val, nil
-		}
-
-		objMap, ok = val.(map[string]interface{})
-		if !ok {
-			return nil, errors.New("invalid structure")
-		}
-	}
-
-	return nil, errors.New("invalid path")
 }

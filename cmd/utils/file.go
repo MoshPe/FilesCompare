@@ -2,10 +2,14 @@ package utils
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/clbanning/mxj/v2"
 	"gopkg.in/yaml.v3"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 const (
@@ -54,4 +58,23 @@ func UnmarshalYaml(filepath string) interface{} {
 	}
 
 	return obj
+}
+
+func MarshalFile(path string) interface{} {
+	fileExt := filepath.Ext(path)
+	var fileContent interface{}
+	switch strings.ToLower(fileExt) {
+	case Json:
+		fileContent = UnmarshalJson(path)
+		break
+	case YAML, YML:
+		fileContent = UnmarshalYaml(path)
+		break
+	case XML:
+		fileContent = UnmarshalXML(path)
+		break
+	default:
+		panic(errors.New(fmt.Sprintf("invalid file type: %s", fileExt)))
+	}
+	return fileContent
 }

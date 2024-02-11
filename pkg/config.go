@@ -9,14 +9,19 @@ import (
 )
 
 type FileCompareConfig struct {
-	Ips                []string `json:"ips"`
-	InstallationFolder string   `json:"installation_folder"`
-	ExcludePatterns    []string `json:"exclude_patterns"`
+	ReferenceApplication string        `json:"ReferenceApplication"`
+	CompareApplications  []Application `json:"CompareApplications"`
+	FilesToCompare       []string      `json:"FilesToCompare"`
+}
+
+type Application struct {
+	ApplicationName string `json:"ApplicationName"`
+	Path            string `json:"Path"`
 }
 
 func InitConfigDir() {
 	if _, err := os.Stat(os.ExpandEnv(filepath.Join("$HOME", ".fileCompare"))); errors.Is(err, os.ErrNotExist) {
-		os.Mkdir(os.ExpandEnv(filepath.Join("$HOME", ".fileCompare")), 0755)
+		os.Mkdir(os.ExpandEnv(filepath.Join("$HOME", ".fileCompare")), 0777)
 	}
 }
 
@@ -31,8 +36,6 @@ func initJsonData() {
 	result := FileCompareConfig{}
 	stringSlice := make([]string, 1)
 	stringSlice[0] = "put data here"
-	result.Ips = stringSlice
-	result.ExcludePatterns = stringSlice
 
 	byteValue, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
