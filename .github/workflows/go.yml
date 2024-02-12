@@ -10,83 +10,7 @@ on:
     branches: [ "master" ]
 
 jobs:
-
-  build-windows:
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.21'
-
-    - name: Build for Windows
-      run: go build -o ${{ github.event.repository.name }}.exe
-      
-    - name: Create Release - Windows
-      id: create_release_windows
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v1.0.1
-        release_name: Release v1.0.1 - ${{ github.event.repository.name }}
-        body: |
-            - Compare file via the CLI itself with --reference and given files as argument.
-            - Compare files with a configuration files, utilizing patterns the subfolders.
-        draft: false
-        prerelease: false
-
-    - name: Upload Release Asset - Windows
-      id: upload_release_asset_windows
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release_windows.outputs.upload_url }}
-        asset_path: ./${{ github.event.repository.name }}.exe
-        asset_name: ${{ github.event.repository.name }}.exe
-        asset_content_type: application/octet-stream
-        
-  build_macos:
-    runs-on: macos-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Setup Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: '1.21'
-
-    - name: Build for macOS
-      run: GOOS=darwin GOARCH=amd64 go build -o ${{ github.event.repository.name }}
-
-    - name: Create Release - ${{ github.event.repository.name }} - macOS
-      id: create_release_macos
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v1.0.1
-        release_name: Release v1.0.1 - ${{ github.event.repository.name }} - macOS
-        draft: false
-        prerelease: false
-
-    - name: Upload Release Asset - macOS
-      id: upload_release_asset_macos
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release_macos.outputs.upload_url }}
-        asset_path: ./${{ github.event.repository.name }}
-        asset_name: ${{ github.event.repository.name }}
-        asset_content_type: application/octet-stream
-
-  build_linux:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -98,27 +22,39 @@ jobs:
       with:
         go-version: '1.21'
 
-    - name: Build for Linux
-      run: GOOS=linux GOARCH=amd64 go build -o ${{ github.event.repository.name }}
+    - name: Build for Windows
+      run: GOOS=windows GOARCH=amd64 go build -o ${{ github.event.repository.name }}.exe
 
-    - name: Create Release - Linux
-      id: create_release_linux
+    - name: Build for macOS
+      run: GOOS=darwin GOARCH=amd64 go build -o ${{ github.event.repository.name }}_macos
+
+    - name: Build for Linux
+      run: GOOS=linux GOARCH=amd64 go build -o ${{ github.event.repository.name }}_linux
+
+    - name: Create Release
+      id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v1.0.1
-        release_name: Release v1.0.1 - ${{ github.event.repository.name }} - Linux
+        tag_name: v1.0.0
+        release_name: Release v1.0.0 - ${{ github.event.repository.name }}
         draft: false
         prerelease: false
 
-    - name: Upload Release Asset - ${{ github.event.repository.name }} - Linux
-      id: upload_release_asset_linux
+    - name: Upload Release Assets
+      id: upload_release_assets
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.create_release_linux.outputs.upload_url }}
-        asset_path: ./${{ github.event.repository.name }}
-        asset_name: ${{ github.event.repository.name }}
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: |
+          ${{ github.event.repository.name }}.exe
+          ${{ github.event.repository.name }}_macos
+          ${{ github.event.repository.name }}_linux
+        asset_name: |
+          ${{ github.event.repository.name }}.exe
+          ${{ github.event.repository.name }}_macos
+          ${{ github.event.repository.name }}_linux
         asset_content_type: application/octet-stream
