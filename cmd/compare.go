@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	_ "gopkg.in/yaml.v3"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -76,8 +77,12 @@ func init() {
 	RootCmd.AddCommand(compareCmd())
 }
 func compareFlags(cmd *cobra.Command) {
+	getwd, err := os.Getwd()
+	if err != nil {
+		return
+	}
 	cmd.Flags().StringVarP(&ReferenceFilePath, "reference", "r", "", "Reference file to compare")
-	cmd.Flags().StringVarP(&OutputPath, "output", "o", "compare_results", "Output file name")
+	cmd.Flags().StringVarP(&OutputPath, "output", "o", "compare_results", fmt.Sprintf("Output file name. default: %s", filepath.Join(getwd, "compare_results.csv")))
 }
 
 func compareFilesContent(reference interface{}, files map[string]interface{}) {
@@ -98,7 +103,7 @@ func compareFilesContent(reference interface{}, files map[string]interface{}) {
 					log.Fatalf("Error extractig field %s from %s", keys, fileName)
 				}
 
-				csvOutput.WriteRow(referenceValue, compareToValue, keys, fileName)
+				csvOutput.WriteRow(referenceValue, compareToValue, keys)
 			}
 		} else {
 			log.Printf("Files %s to %s are equals", ReferenceFileName, fileName)
@@ -111,7 +116,7 @@ func compareFilesDates(files []string) {
 
 	for _, file := range files {
 		creationDate, modificationDate := utils.GetCreationModificationTime(file)
-		csvOutput.WriteRow(creationReferenceTime, creationDate, "Creation Date", file)
-		csvOutput.WriteRow(modificationReferenceTime, modificationDate, "Modification Date", file)
+		csvOutput.WriteRow(creationReferenceTime, creationDate, "Creation Date")
+		csvOutput.WriteRow(modificationReferenceTime, modificationDate, "Modification Date")
 	}
 }

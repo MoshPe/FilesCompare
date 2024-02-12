@@ -20,30 +20,52 @@ type Application struct {
 }
 
 func InitConfigDir() {
-	if _, err := os.Stat(os.ExpandEnv(filepath.Join("$HOME", ".fileCompare"))); errors.Is(err, os.ErrNotExist) {
-		os.Mkdir(os.ExpandEnv(filepath.Join("$HOME", ".fileCompare")), 0777)
+	dirname, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dirname, ".fileCompare")); errors.Is(err, os.ErrNotExist) {
+		err := os.Mkdir(filepath.Join(dirname, ".fileCompare"), 0777)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
 func InitConfigFile() {
-	if _, err := os.Stat(os.ExpandEnv(filepath.Join("$HOME", ".fileCompare", ".fileCompare.json"))); errors.Is(err, os.ErrNotExist) {
-		os.Create(os.ExpandEnv(filepath.Join("$HOME", ".fileCompare", ".fileCompare.json")))
-		initJsonData()
+	dirname, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dirname, ".fileCompare", ".fileCompare.json")); errors.Is(err, os.ErrNotExist) {
+		file, err := os.Create(filepath.Join(dirname, ".fileCompare", ".fileCompare.json"))
+		if err != nil {
+			log.Fatal(err)
+		}
+		initJsonData(file)
 	}
 }
 
-func initJsonData() {
+func initJsonData(file *os.File) {
 	result := FileCompareConfig{}
 	stringSlice := make([]string, 1)
 	stringSlice[0] = "put data here"
-
+	result.ReferenceApplication = "\\path\\to\\reference\\folder"
+	result.CompareApplications = []Application{
+		{
+			ApplicationName: "App A",
+			Path:            "\\path\\to\\application_A\\folder",
+		},
+	}
+	result.FilesToCompare = []string{"compare.json"}
 	byteValue, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	// Write back to file
-	err = os.WriteFile(os.ExpandEnv(filepath.Join("$HOME", ".fileCompare", ".fileCompare.json")), byteValue, 0644)
+
+	_, err = file.Write(byteValue)
 	if err != nil {
 		log.Fatal(err)
 	}
