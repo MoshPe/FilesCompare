@@ -56,7 +56,7 @@ jobs:
         asset_name: ${{ github.event.repository.name }}.exe
         asset_content_type: application/octet-stream
 
-    - name: Upload Release Assets
+    - name: Upload MacOS Release Assets
       id: upload_release_assets_macos
       uses: actions/upload-release-asset@v1
       env:
@@ -67,7 +67,7 @@ jobs:
         asset_name: ${{ github.event.repository.name }}_macos
         asset_content_type: application/octet-stream
 
-    - name: Upload Release Assets
+    - name: Upload Linux Release Assets
       id: upload_release_assets_linux
       uses: actions/upload-release-asset@v1
       env:
