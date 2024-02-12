@@ -22,7 +22,7 @@ jobs:
         go-version: '1.21'
 
     - name: Build for Windows
-      run: GOARCH=amd64 go build -o ${{ github.event.repository.name }}.exe
+      run: go build -o ${{ github.event.repository.name }}.exe
       
     - name: Build for Linux
       run: GOOS=linux GOARCH=amd64 go build -o ${{ github.event.repository.name }} 
@@ -50,17 +50,6 @@ jobs:
         upload_url: ${{ steps.create_release_windows.outputs.upload_url }}
         asset_path: ./${{ github.event.repository.name }}.exe
         asset_name: ${{ github.event.repository.name }}.exe
-        asset_content_type: application/octet-stream
-
-    - name: Upload Release Asset - Linux
-      id: upload_release_asset_linux
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release_windows.outputs.upload_url }}
-        asset_path: ./${{ github.event.repository.name }}
-        asset_name: ${{ github.event.repository.name }}
         asset_content_type: application/octet-stream
         
   build_macos:
