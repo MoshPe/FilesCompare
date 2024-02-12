@@ -4,12 +4,14 @@ import (
 	"FilesCompare/cmd"
 	"FilesCompare/cmd/utils"
 	"FilesCompare/pkg"
+	"fmt"
 	"github.com/go-test/deep"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	_ "gopkg.in/yaml.v3"
 	"log"
+	"os"
 	"path/filepath"
 )
 
@@ -23,7 +25,6 @@ type FileContent struct {
 }
 
 var csvOutput utils.CsvCompareWriter
-var referenceApplicationName string
 var outputPath string
 var FileCompareConfig pkg.FileCompareConfig
 var applicationsFiles map[string]Application
@@ -61,12 +62,20 @@ func init() {
 	cmd.RootCmd.AddCommand(compareConfigCmd())
 }
 func compareFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&outputPath, "output", "o", "compare_results", "Output file name. default: compare_results.csv")
+	getwd, err := os.Getwd()
+	if err != nil {
+		return
+	}
+	cmd.Flags().StringVarP(&outputPath, "output", "o", "compare_results", fmt.Sprintf("Output file name. default: %s", filepath.Join(getwd, "compare_results.csv")))
 }
 
 func compareFilesContent(reference interface{}, files map[string]interface{}, fileName string) {
 	var diff []string
 	for appName, fileContent := range files {
+		if fileContent == nil {
+			log.Printf("File %s content does not exist - AppName : %s", fileName, appName)
+			continue
+		}
 		diff = deep.Equal(reference, fileContent)
 		if diff != nil {
 			log.Printf("File %s are NOT equals - AppName : %s", fileName, appName)
@@ -82,7 +91,7 @@ func compareFilesContent(reference interface{}, files map[string]interface{}, fi
 					log.Fatalf("Error extractig field %s from application file %s - AppName : %s", keys, fileName, appName)
 				}
 
-				csvOutput.WriteRow(referenceValue, compareToValue, keys, fileName)
+				csvOutput.WriteRowWithAppName(referenceValue, compareToValue, keys, fileName)
 			}
 		} else {
 			log.Printf("Files %s are equals - AppName : %s", fileName, appName)
@@ -92,7 +101,6 @@ func compareFilesContent(reference interface{}, files map[string]interface{}, fi
 
 func getFilesPaths() {
 	referenceFilesContent = make(map[string]FileContent)
-	referenceApplicationName = filepath.Base(FileCompareConfig.ReferenceApplication)
 
 	referencePatterns, err := FindFilesMatchingPatterns(FileCompareConfig.ReferenceApplication, FileCompareConfig.FilesToCompare)
 	if err != nil {
@@ -139,8 +147,8 @@ func compareFilesDates() {
 		for pattern, fileContent := range application.FilesContent {
 			creationReferenceTime, modificationReferenceTime := utils.GetCreationModificationTime(referenceFilesContent[pattern].path)
 			creationDate, modificationDate := utils.GetCreationModificationTime(fileContent.path)
-			csvOutput.WriteRow(creationReferenceTime, creationDate, "Creation Date", pattern)
-			csvOutput.WriteRow(modificationReferenceTime, modificationDate, "Modification Date", pattern)
+			csvOutput.WriteRowWithAppName(creationReferenceTime, creationDate, "Creation Date", pattern)
+			csvOutput.WriteRowWithAppName(modificationReferenceTime, modificationDate, "Modification Date", pattern)
 		}
 	}
 }

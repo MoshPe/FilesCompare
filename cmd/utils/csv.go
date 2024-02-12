@@ -11,6 +11,7 @@ type CsvCompareWriter struct {
 	writer            *csv.Writer
 	headers           []string
 	referenceFileName string
+	files             map[string]map[string][]string
 	fields            map[string][]string
 }
 
@@ -63,11 +64,10 @@ func (csvCompare *CsvCompareWriter) InitCsvWithAppNames(path string, compareFile
 	if err := os.Chmod(path+".csv", 0777); err != nil {
 		log.Fatalf("Error setting file permissions: %v\n", err)
 	}
-	csvCompare.headers = []string{"field"}
-	csvCompare.fields = make(map[string][]string)
+	csvCompare.files = make(map[string]map[string][]string)
 	for _, compareFile := range compareFiles {
 		baseFileName := filepath.Base(compareFile)
-		csvCompare.headers = append(csvCompare.headers, baseFileName)
+		csvCompare.files[baseFileName] = make(map[string][]string)
 	}
 
 	csvCompare.writer = csv.NewWriter(file)
@@ -77,15 +77,16 @@ func (csvCompare *CsvCompareWriter) InitCsvWithAppNames(path string, compareFile
 		log.Fatalf("Error writing row to CSV: %v", err)
 	}
 
-	if err := csvCompare.writer.Write(csvCompare.headers); err != nil {
-		log.Fatalf("Error writing row to CSV: %v", err)
-	}
 	return func() {
-		for _, field := range csvCompare.fields {
-			err := csvCompare.writer.Write(field)
-			if err != nil {
-				log.Fatalf("Error writing row to CSV: %v", err)
+		for fileName, fields := range csvCompare.files {
+			csvCompare.WriteFileName(fileName)
+			for _, field := range fields {
+				err := csvCompare.writer.Write(field)
+				if err != nil {
+					log.Fatalf("Error writing row to CSV: %v", err)
+				}
 			}
+			csvCompare.WriteSeparator()
 		}
 		defer func(file *os.File) {
 			err := file.Close()
@@ -97,10 +98,34 @@ func (csvCompare *CsvCompareWriter) InitCsvWithAppNames(path string, compareFile
 	}
 }
 
-func (csvCompare *CsvCompareWriter) WriteRow(referenceValue, fileValue interface{}, field, compareFileName string) {
+func (csvCompare *CsvCompareWriter) WriteRowWithAppName(referenceValue, fileValue interface{}, field, compareFileName string) {
+	if len(csvCompare.files[compareFileName][field]) == 0 {
+		csvCompare.files[compareFileName][field] = append(csvCompare.files[compareFileName][field], field, ConvertToString(referenceValue))
+	}
+
+	csvCompare.files[compareFileName][field] = append(csvCompare.files[compareFileName][field], ConvertToString(fileValue))
+}
+
+func (csvCompare *CsvCompareWriter) WriteRow(referenceValue, fileValue interface{}, field string) {
 	if len(csvCompare.fields[field]) == 0 {
 		csvCompare.fields[field] = append(csvCompare.fields[field], field, ConvertToString(referenceValue))
 	}
 
 	csvCompare.fields[field] = append(csvCompare.fields[field], ConvertToString(fileValue))
+}
+
+func (csvCompare *CsvCompareWriter) WriteSeparator() {
+	for i := 0; i < 3; i++ {
+		err := csvCompare.writer.Write([]string{})
+		if err != nil {
+			log.Fatalf("Error writing row to CSV: %v", err)
+		}
+	}
+}
+
+func (csvCompare *CsvCompareWriter) WriteFileName(name string) {
+	err := csvCompare.writer.Write([]string{name})
+	if err != nil {
+		log.Fatalf("Error writing row to CSV: %v", err)
+	}
 }

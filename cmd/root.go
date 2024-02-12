@@ -3,7 +3,6 @@ package cmd
 import (
 	"FilesCompare/pkg"
 	"fmt"
-	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"log"
@@ -17,7 +16,7 @@ var cfgFile string
 var RootCmd = &cobra.Command{
 	Use:     "FileCompare",
 	Short:   "A powerful tool for comparing files based on their content, creation date, and modification date. ",
-	Version: "0.1.0",
+	Version: "1.0.0",
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -34,7 +33,6 @@ func init() {
 	pkg.InitConfigFile()
 	initConfig()
 
-	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	RootCmd.CompletionOptions.DisableDefaultCmd = true
 }
 
@@ -45,7 +43,7 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		// Find home directory.
-		home, err := homedir.Dir()
+		home, err := os.UserHomeDir()
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -58,7 +56,8 @@ func initConfig() {
 
 	viper.AutomaticEnv()
 
-	if err := viper.ReadInConfig(); err == nil {
-		log.Println("Using config file:", viper.ConfigFileUsed())
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatal(err)
 	}
+	//log.Println("Using config file:", viper.ConfigFileUsed())
 }

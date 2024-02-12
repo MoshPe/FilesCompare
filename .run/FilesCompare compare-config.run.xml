@@ -2,7 +2,7 @@
   <configuration default="false" name="FilesCompare compare-config" type="GoApplicationRunConfiguration" factoryName="Go Application">
     <module name="FilesCompare" />
     <working_directory value="$PROJECT_DIR$" />
-    <parameters value="compare-config" />
+    <parameters value="compare-config --output E:\compare.csv" />
     <sudo value="true" />
     <kind value="PACKAGE" />
     <package value="FilesCompare" />
