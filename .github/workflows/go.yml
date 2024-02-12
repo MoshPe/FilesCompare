@@ -24,9 +24,6 @@ jobs:
     - name: Build for Windows
       run: go build -o ${{ github.event.repository.name }}.exe
       
-    - name: Build for Linux
-      run: GOOS=linux GOARCH=amd64 go build -o ${{ github.event.repository.name }} 
-      
     - name: Create Release - Windows
       id: create_release_windows
       uses: actions/create-release@v1
