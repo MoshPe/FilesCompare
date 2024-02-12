@@ -23,3 +23,28 @@ jobs:
 
     - name: Build
       run: GOOS=windows GOARCH=amd64 go build -o ${{ github.event.repository.name }}.exe
+      
+    - name: Create Release - Windows
+      id: create_release_windows
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v1.0.0
+        release_name: Release v1.0.0 - ${{ github.event.repository.name }} Windows
+        body: |
+            - Compare file via the CLI itself with --reference and given files as argument.
+            - Compare files with a configuration files, utilizing patterns the subfolders.
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset - Windows
+      id: upload_release_asset_windows
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release_windows.outputs.upload_url }}
+        asset_path: ./${{ github.event.repository.name }}.exe
+        asset_name: ${{ github.event.repository.name }}.exe
+        asset_content_type: application/octet-stream
