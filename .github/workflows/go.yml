@@ -33,7 +33,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v1.0.0
+        tag_name: v1.0.1
         release_name: Release v1.0.0 - ${{ github.event.repository.name }}
         body: |
             - Compare file via the CLI itself with --reference and given files as argument.
@@ -73,7 +73,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v1.0.0
+        tag_name: v1.0.1
         release_name: Release v1.0.0 - macOS
         draft: false
         prerelease: false
@@ -110,7 +110,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v1.0.0
+        tag_name: v1.0.1
         release_name: Release v1.0.0 - Linux
         draft: false
         prerelease: false
