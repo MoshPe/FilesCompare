@@ -31,7 +31,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v1.0.1
-        release_name: Release v1.0.0 - ${{ github.event.repository.name }}
+        release_name: Release v1.0.1 - ${{ github.event.repository.name }}
         body: |
             - Compare file via the CLI itself with --reference and given files as argument.
             - Compare files with a configuration files, utilizing patterns the subfolders.
@@ -64,14 +64,14 @@ jobs:
     - name: Build for macOS
       run: GOOS=darwin GOARCH=amd64 go build -o ${{ github.event.repository.name }}
 
-    - name: Create Release - macOS
+    - name: Create Release - ${{ github.event.repository.name }} - macOS
       id: create_release_macos
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v1.0.1
-        release_name: Release v1.0.0 - macOS
+        release_name: Release v1.0.1 - ${{ github.event.repository.name }} - macOS
         draft: false
         prerelease: false
 
@@ -108,11 +108,11 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v1.0.1
-        release_name: Release v1.0.0 - Linux
+        release_name: Release v1.0.1 - ${{ github.event.repository.name }} - Linux
         draft: false
         prerelease: false
 
-    - name: Upload Release Asset - Linux
+    - name: Upload Release Asset - ${{ github.event.repository.name }} - Linux
       id: upload_release_asset_linux
       uses: actions/upload-release-asset@v1
       env:
