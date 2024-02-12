@@ -52,15 +52,28 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: |
-          ./${{ github.event.repository.name }}.exe
-          ${{ github.event.repository.name }}_macos
-          ${{ github.event.repository.name }}_linux
-        asset_name: |
-          ./${{ github.event.repository.name }}.exe
-          ${{ github.event.repository.name }}_macos
-          ${{ github.event.repository.name }}_linux
-        asset_content_type: |
-          application/octet-stream
-          application/octet-stream
-          application/octet-stream
+        asset_path: ./${{ github.event.repository.name }}.exe
+        asset_name: ${{ github.event.repository.name }}.exe
+        asset_content_type: application/octet-stream
+
+    - name: Upload Release Assets
+      id: upload_release_assets_macos
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./${{ github.event.repository.name }}_macos
+        asset_name: ${{ github.event.repository.name }}_macos
+        asset_content_type: application/octet-stream
+
+    - name: Upload Release Assets
+      id: upload_release_assets_linux
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./${{ github.event.repository.name }}_linux
+        asset_name: ${{ github.event.repository.name }}_linux
+        asset_content_type: application/octet-stream
