@@ -39,6 +39,9 @@ jobs:
       with:
         tag_name: v1.0.0
         release_name: Release v1.0.0 - ${{ github.event.repository.name }}
+        body: |
+            - Compare file via the CLI itself with --reference and given files as argument.
+            - Compare files with a configuration files, utilizing patterns the subfolders.
         draft: false
         prerelease: false
 
