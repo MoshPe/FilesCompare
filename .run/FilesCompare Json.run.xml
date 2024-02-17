@@ -2,6 +2,7 @@
   <configuration default="false" name="FilesCompare Json" type="GoApplicationRunConfiguration" factoryName="Go Application">
     <module name="FilesCompare" />
     <working_directory value="$PROJECT_DIR$" />
+    <go_parameters value="-mod=vendor" />
     <parameters value="compare --reference example/json/reference.json example/json/A.json example/json/B.json" />
     <sudo value="true" />
     <kind value="PACKAGE" />

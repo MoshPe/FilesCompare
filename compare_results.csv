@@ -1,17 +1,7 @@
-,Reference File,App B,App A
-compare.json
-connection.indexSettings.dependencies.number_of_shards,1,2,2
-connection.pingInterval,1000,999,999
-Creation Date,2024-02-11 20:45:39 +0200 IST,2024-02-12 23:01:42.5645549 +0200 IST,2024-02-11 20:45:39 +0200 IST
-Modification Date,2024-02-11 20:45:39 +0200 IST,2024-02-12 23:01:42.5645549 +0200 IST,2024-02-11 20:45:39 +0200 IST
-
-
-
-compareB.json
-Creation Date,2024-02-11 20:45:39 +0200 IST,2024-02-11 20:45:39 +0200 IST
-Modification Date,2024-02-11 20:45:39 +0200 IST,2024-02-11 20:45:39 +0200 IST
+,Reference File
+field,reference.json,A.json,B.json
 connection.indexSettings.dependencies.number_of_shards,1,2
-connection.pingInterval,1000,999
-
-
-
+connection.pingInterval,1000,999,999
+connection.retryInterval,5000,5003
+Creation Date,2024-02-02 09:57:41.906940349 +0200 IST,2024-02-02 15:27:35.190198328 +0200 IST,2024-02-02 15:27:35.202198318 +0200 IST
+Modification Date,2024-02-02 09:57:41.906940349 +0200 IST,2024-02-02 15:27:35.190198328 +0200 IST,2024-02-02 15:27:35.202198318 +0200 IST

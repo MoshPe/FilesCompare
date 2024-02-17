@@ -1,0 +1,28 @@
+package main
+
+import (
+	_ "github.com/bramvdbogaerde/go-scp"
+	_ "github.com/clbanning/mxj/v2"
+	_ "github.com/fsnotify/fsnotify"
+	_ "github.com/go-test/deep"
+	_ "github.com/hashicorp/hcl"
+	_ "github.com/inconshreveable/mousetrap"
+	_ "github.com/magiconair/properties"
+	_ "github.com/mitchellh/go-homedir"
+	_ "github.com/mitchellh/mapstructure"
+	_ "github.com/pelletier/go-toml/v2"
+	_ "github.com/sagikazarmark/locafero"
+	_ "github.com/sagikazarmark/slog-shim"
+	_ "github.com/sourcegraph/conc"
+	_ "github.com/spf13/afero"
+	_ "github.com/spf13/cast"
+	_ "github.com/spf13/cobra"
+	_ "github.com/spf13/pflag"
+	_ "github.com/spf13/viper"
+	_ "github.com/subosito/gotenv"
+	_ "go.uber.org/atomic"
+	_ "go.uber.org/multierr"
+	_ "golang.org/x/text"
+	_ "gopkg.in/ini.v1"
+	_ "gopkg.in/yaml.v3"
+)
